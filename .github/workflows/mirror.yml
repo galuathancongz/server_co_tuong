@@ -1,0 +1,33 @@
+name: Mirror and Rewrite
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"   # chạy mỗi 10 phút
+  workflow_dispatch:         # chạy thủ công
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Clone source repository
+      run: |
+        git clone --mirror https://github.com/mhchien/GameServer_CoTuong.git source.git
+
+    - name: Rewrite commit authors
+      run: |
+        cd source.git
+        git filter-branch --env-filter '
+          export GIT_AUTHOR_NAME="galuathancongz"
+          export GIT_AUTHOR_EMAIL="galuathancongz@gmail.com"
+          export GIT_COMMITTER_NAME="galuathancongz"
+          export GIT_COMMITTER_EMAIL="galuathancongz@gmail.com"
+        ' -- --all
+
+    - name: Push to target repository (mirror)
+      env:
+        PAT: ${{ secrets.PAT }}
+      run: |
+        cd source.git
+        git remote set-url origin https://x-access-token:${PAT}@https://github.com/galuathancongz/server_co_tuong.git
+        git push --force --mirror
